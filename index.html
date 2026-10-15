@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>W-Noise — Sounds of the World</title>
+<meta name="description" content="Travel the world by ear: real field recordings from forests, cities, oceans and ice, on a world map. Free, no account.">
+<meta name="theme-color" content="#070b14" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="W-Noise">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script>
+  /* Pre-paint: apply saved theme before anything draws (no flash) */
+  (function () {
+    try {
+      var t = JSON.parse(localStorage.getItem('wn-theme') || '"auto"');
+      if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+      var p = JSON.parse(localStorage.getItem('wn-palette') || '"aurora"');
+      if (/^[a-z]+$/.test(p) && p !== 'aurora') document.documentElement.setAttribute('data-palette', p);
+    } catch (e) {}
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#panel">Skip to places</a>
+
+<!-- ============ HEADER ============ -->
+<header class="top" id="top">
+  <button class="brand" id="brandBtn" aria-label="W-Noise: open the Creator page and credits">
+    <svg class="logo" id="logo" viewBox="0 0 64 64" aria-hidden="true">
+      <defs>
+        <clipPath id="lgClip"><circle cx="32" cy="32" r="15"/></clipPath>
+      </defs>
+      <circle class="lg-ring r1" cx="32" cy="32" r="20"/>
+      <circle class="lg-ring r2" cx="32" cy="32" r="20"/>
+      <circle class="lg-ring r3" cx="32" cy="32" r="20"/>
+      <circle class="lg-globe" cx="32" cy="32" r="15"/>
+      <g clip-path="url(#lgClip)">
+        <g class="lg-spin">
+          <ellipse class="lg-mer" cx="32" cy="32" rx="6" ry="15"/>
+          <ellipse class="lg-mer m2" cx="32" cy="32" rx="12" ry="15"/>
+        </g>
+        <line class="lg-lat" x1="17" y1="26" x2="47" y2="26"/>
+        <line class="lg-lat" x1="17" y1="38" x2="47" y2="38"/>
+      </g>
+      <g class="lg-eq">
+        <rect x="24" y="27" width="3" height="10" rx="1.5"/>
+        <rect x="30.5" y="23" width="3" height="18" rx="1.5"/>
+        <rect x="37" y="27" width="3" height="10" rx="1.5"/>
+      </g>
+    </svg>
+    <span class="brand-name">W<span class="dash">-</span>Noise</span>
+  </button>
+
+  <div class="top-actions">
+    <span class="counter" id="counter" aria-live="polite"></span>
+    <button class="btn ghost" id="installBtn" hidden aria-label="Install W-Noise as an app">
+      <svg class="i" aria-hidden="true"><use href="#i-download"/></svg><span class="lbl">Install</span>
+    </button>
+    <button class="icon-btn" id="creatorBtn" aria-label="Creator page and sound credits" title="Creator & credits">
+      <svg class="i" aria-hidden="true"><use href="#i-heart"/></svg>
+    </button>
+    <button class="icon-btn" id="themeBtn" aria-label="Theme: Auto" title="Theme: Auto">
+      <svg class="i" aria-hidden="true"><use id="themeIcon" href="#i-auto"/></svg>
+    </button>
+    <button class="icon-btn" id="layoutBtn" aria-label="Screen mode: Auto" title="Screen mode: Auto"><svg class="i" aria-hidden="true"><use id="layoutIcon" href="#i-auto"/></svg></button>
+    <button class="icon-btn help" id="helpBtn" aria-label="How to use W-Noise" title="How to use">?</button>
+    <button class="icon-btn" id="paletteBtn" aria-label="Colour palettes" title="Colour palettes" aria-haspopup="dialog"><svg class="i" aria-hidden="true"><use href="#i-palette"/></svg></button>
+  </div>
+</header>
+
+<!-- ============ MAP ============ -->
+<section class="map-wrap" id="mapWrap" aria-label="World map of sound locations">
+  <svg id="map" class="map" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet" role="application" aria-label="World map. Tap a glowing dot to listen.">
+    <defs>
+      <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+        <stop offset="0" stop-color="var(--accent)" stop-opacity=".55"/>
+        <stop offset="1" stop-color="var(--accent)" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect class="sea" x="-2000" y="-2000" width="5000" height="4500"/>
+    <g id="grid" class="grid"></g>
+    <path id="land" class="land"/>
+    <g id="pins"></g>
+  </svg>
+
+  <canvas id="globe" class="globe" role="img" aria-label="Spinning globe with sound locations. Use the places list for keyboard access."></canvas>
+
+  <div class="map-hud">
+    <p class="hint" id="mapHint">Drag to spin the globe · tap a glowing dot</p>
+  </div>
+  <div class="zoom" id="zoomCtl" role="group" aria-label="Map zoom">
+    <button class="icon-btn" id="viewBtn" aria-label="Switch to flat map" title="Switch to flat map"><svg class="i" aria-hidden="true"><use id="viewIcon" href="#i-map"/></svg></button>
+    <button class="icon-btn" id="zoomIn" aria-label="Zoom in">+</button>
+    <button class="icon-btn" id="zoomOut" aria-label="Zoom out">−</button>
+    <button class="icon-btn" id="zoomReset" aria-label="Re-centre the globe"><svg class="i" aria-hidden="true"><use href="#i-target"/></svg></button>
+  </div>
+  <button class="fab" id="randomBtn" aria-label="Random trip: play a random place">
+    <svg class="i" aria-hidden="true"><use href="#i-shuffle"/></svg><span>Random trip</span>
+  </button>
+</section>
+
+<!-- ============ PANEL ============ -->
+<aside class="panel" id="panel" aria-label="Places and recordings">
+  <button class="sheet-handle" id="sheetHandle" aria-label="Resize map and list"><span></span></button>
+
+  <!-- List of places -->
+  <div class="view" id="viewList">
+    <div class="search">
+      <svg class="i" aria-hidden="true"><use href="#i-search"/></svg>
+      <input id="q" type="search" placeholder="Search places, countries, sounds…" autocomplete="off" aria-label="Search places">
+    </div>
+    <div class="chips" id="chips" role="tablist" aria-label="Sound categories"></div>
+    <ul class="places" id="placeList" aria-live="polite"></ul>
+  </div>
+
+  <!-- One place -->
+  <div class="view" id="viewPlace" hidden>
+    <div class="place-head">
+      <button class="icon-btn" id="backBtn" aria-label="Back to all places"><svg class="i" aria-hidden="true"><use href="#i-back"/></svg></button>
+      <div class="place-title">
+        <p class="eyebrow" id="pCat"></p>
+        <h2 id="pName"></h2>
+        <p class="sub" id="pWhere"></p>
+      </div>
+      <button class="icon-btn" id="savePlace" aria-pressed="false" aria-label="Save this place"><svg class="i" aria-hidden="true"><use href="#i-star"/></svg></button>
+    </div>
+    <div class="hero" id="hero">
+      <div class="s-art" aria-hidden="true"></div>
+      <div class="s-photos" aria-hidden="true"></div>
+      <div class="hero-shade"></div>
+      <div class="hero-cap"><span class="hero-chip" id="heroChip"></span><span class="s-credit"></span></div>
+      <button class="hero-expand" id="heroExpand" aria-label="Show the picture full screen" title="Full screen"><svg class="i" aria-hidden="true"><use href="#i-expand"/></svg></button>
+    </div>
+    <p class="blurb" id="pBlurb"></p>
+    <div class="place-actions">
+      <button class="btn primary" id="playPlace"><svg class="i" aria-hidden="true"><use href="#i-play"/></svg>Play this place</button>
+      <button class="btn ghost" id="refreshBtn" aria-label="Search Wikimedia Commons again"><svg class="i" aria-hidden="true"><use href="#i-refresh"/></svg>Refresh</button>
+    </div>
+    <p class="status" id="recStatus" aria-live="polite"></p>
+    <ol class="recs" id="recList"></ol>
+    <button class="btn ghost wide" id="moreBtn" hidden>Find more recordings</button>
+    <p class="fineprint">Recordings are found live on <a href="https://commons.wikimedia.org" target="_blank" rel="noopener">Wikimedia Commons</a> by the words in this place's search list. Every one is free-licensed and credited to its recordist.</p>
+  </div>
+</aside>
+
+<!-- ============ FULL-SCREEN PICTURE (sits between the header and the player, so the player stays usable) ============ -->
+<section class="stage" id="stage" hidden aria-label="Picture of this place">
+  <div class="s-art" aria-hidden="true"></div>
+  <div class="s-photos" aria-hidden="true"></div>
+  <div class="hero-shade"></div>
+  <div class="stage-cap">
+    <p class="eyebrow" id="stCat"></p>
+    <h2 id="stName"></h2>
+    <p class="sub" id="stWhere"></p>
+    <p class="stage-meta"><span id="stCount"></span><span class="s-credit"></span></p>
+  </div>
+  <button class="icon-btn stage-close" data-stage-close aria-label="Close the full-screen picture"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button>
+</section>
+
+<!-- ============ PLAYER ============ -->
+<footer class="player" id="player" aria-label="Player">
+  <canvas class="viz" id="viz" aria-hidden="true"></canvas>
+  <div class="p-main">
+    <div class="p-info">
+      <p class="p-title" id="pTitle">Pick a place on the map</p>
+      <p class="p-sub" id="pSub">Real sounds, recorded on location</p>
+    </div>
+    <div class="p-ctl">
+      <button class="icon-btn" id="prevBtn" aria-label="Previous recording"><svg class="i" aria-hidden="true"><use href="#i-prev"/></svg></button>
+      <button class="play-btn" id="playBtn" aria-label="Play"><svg class="i" aria-hidden="true"><use id="playIcon" href="#i-play"/></svg></button>
+      <button class="icon-btn" id="nextBtn" aria-label="Next recording"><svg class="i" aria-hidden="true"><use href="#i-next"/></svg></button>
+    </div>
+    <div class="p-extra">
+      <button class="icon-btn" id="loopBtn" aria-pressed="false" aria-label="Loop this recording" title="Loop"><svg class="i" aria-hidden="true"><use href="#i-loop"/></svg></button>
+      <button class="icon-btn txt" id="sleepBtn" aria-label="Sleep timer: off" title="Sleep timer"><svg class="i" aria-hidden="true"><use href="#i-moon"/></svg><span id="sleepLbl"></span></button>
+      <button class="icon-btn" id="creditBtn" aria-label="Credit for this recording" title="Credit"><svg class="i" aria-hidden="true"><use href="#i-info"/></svg></button>
+      <label class="vol" title="Volume"><svg class="i" aria-hidden="true"><use href="#i-vol"/></svg><input id="vol" type="range" min="0" max="1" step="0.01" value="0.8" aria-label="Volume"></label>
+    </div>
+  </div>
+  <div class="p-progress"><span id="pTime">0:00</span><input id="seek" type="range" min="0" max="1000" value="0" aria-label="Position"><span id="pDur">0:00</span></div>
+</footer>
+
+<!-- ============ CREATOR PAGE ============ -->
+<section class="page" id="creatorPage" hidden role="dialog" aria-modal="true" aria-labelledby="crTitle">
+  <div class="page-inner">
+    <div class="page-head">
+      <button class="icon-btn" data-close aria-label="Close the Creator page"><svg class="i" aria-hidden="true"><use href="#i-back"/></svg></button>
+      <h2 id="crTitle">Creator &amp; credits</h2>
+    </div>
+
+    <div class="creator-card">
+      <span class="logo-slot" id="crLogo"></span>
+      <div>
+        <p class="eyebrow">Created by</p>
+        <p class="creator-name">SSK-BLUM</p>
+        <p class="sub" id="crMeta"></p>
+      </div>
+    </div>
+    <p>W-Noise lets you travel the world by ear. Every sound is a real field recording, made on location by a person and shared under a free licence on Wikimedia Commons. This page credits each of them. The moving pictures of each place are illustrations drawn by W-Noise; the photos that fade in over them are from Wikimedia Commons and are credited below.</p>
+
+    <h3>Sound credits</h3>
+    <div class="cr-tools">
+      <button class="btn primary" id="collectBtn"><svg class="i" aria-hidden="true"><use href="#i-refresh"/></svg>Collect credits for all places</button>
+      <button class="btn ghost" id="copyCredits"><svg class="i" aria-hidden="true"><use href="#i-copy"/></svg>Copy as text</button>
+    </div>
+    <p class="status" id="crStatus" aria-live="polite"></p>
+    <div id="crList" class="cr-list"></div>
+
+    <h3>Photo credits</h3>
+    <div id="crPhotos" class="cr-list"></div>
+
+    <h3>Map, code and fonts</h3>
+    <ul class="plain">
+      <li><b>Place pictures</b>: animated illustrations by SSK-BLUM (SVG, drawn in code); photos from <a href="https://commons.wikimedia.org" target="_blank" rel="noopener">Wikimedia Commons</a>, each with its own licence.</li>
+      <li><b>Sound files</b>: <a href="https://commons.wikimedia.org" target="_blank" rel="noopener">Wikimedia Commons</a> contributors, via the MediaWiki API. Each file keeps its own licence (shown above).</li>
+      <li><b>World map</b>: land shapes from <a href="https://www.naturalearthdata.com" target="_blank" rel="noopener">Natural Earth</a> (public domain), via <a href="https://github.com/topojson/world-atlas" target="_blank" rel="noopener">world-atlas</a>, turned into dots by W-Noise.</li>
+      <li><b>Fonts</b>: Unbounded, DM Sans and JetBrains Mono (Google Fonts, SIL Open Font License).</li>
+      <li><b>App</b>: HTML, CSS and JavaScript by SSK-BLUM, MIT licence. No accounts, no tracking.</li>
+    </ul>
+    <p class="fineprint">Recordings belong to their authors. W-Noise streams them from Wikimedia's servers and links to each original file page. If you are a recordist and want a credit changed, edit the file page on Commons; W-Noise reads it live.</p>
+    <button class="btn ghost" id="clearCache">Clear saved sound lists</button>
+  </div>
+</section>
+
+<!-- ============ HELP ============ -->
+<div class="modal" id="helpModal" hidden role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2 id="helpTitle">How to use W-Noise</h2>
+      <button class="icon-btn" data-close aria-label="Close"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </div>
+    <button class="btn primary wide" id="tourBtn"><svg class="i" aria-hidden="true"><use href="#i-play"/></svg>Take the 1-minute tour</button>
+    <div id="helpBody" class="help-body"></div>
+  </div>
+</div>
+
+<!-- Colour palettes (a popover: the app behind stays visible so you can see the colours change) -->
+<div class="modal" id="paletteModal" hidden role="dialog" aria-modal="false" aria-labelledby="palTitle">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2 id="palTitle">Colour palettes</h2>
+      <button class="icon-btn" data-close aria-label="Close colour palettes"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="pal-grid" id="palGrid"></div>
+    <p class="pal-note">Each palette has a dark and a light version. Saved on this device.</p>
+  </div>
+</div>
+
+<!-- Credit popover -->
+<div class="modal" id="creditModal" hidden role="dialog" aria-modal="true" aria-labelledby="cmTitle">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2 id="cmTitle">About this recording</h2>
+      <button class="icon-btn" data-close aria-label="Close"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </div>
+    <div id="cmBody"></div>
+  </div>
+</div>
+
+<!-- Spotlight for "Show me" and the tour -->
+<div class="spot" id="spot" hidden>
+  <div class="spot-hole" id="spotHole"></div>
+  <div class="spot-card" id="spotCard" role="dialog" aria-live="polite">
+    <p class="eyebrow" id="spotStep"></p>
+    <h3 id="spotTitle"></h3>
+    <p id="spotText"></p>
+    <div class="spot-btns">
+      <button class="btn ghost" id="spotBack">Back to guide</button>
+      <button class="btn primary" id="spotNext">Got it</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<audio id="audioCors" crossorigin="anonymous" preload="none"></audio>
+<audio id="audioPlain" preload="none"></audio>
+
+<!-- ============ ICONS ============ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z" fill="currentColor"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M6 4h4v16H6zM14 4h4v16h-4z" fill="currentColor"/></symbol>
+  <symbol id="i-next" viewBox="0 0 24 24"><path d="M5 5v14l10-7zM17 5h2v14h-2z" fill="currentColor"/></symbol>
+  <symbol id="i-prev" viewBox="0 0 24 24"><path d="M19 5v14L9 12zM5 5h2v14H5z" fill="currentColor"/></symbol>
+  <symbol id="i-loop" viewBox="0 0 24 24"><path d="M17 2l3 3-3 3M4 11V9a4 4 0 0 1 4-4h12M7 22l-3-3 3-3M20 13v2a4 4 0 0 1-4 4H4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></g></symbol>
+  <symbol id="i-auto" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></g><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></g></symbol>
+  <symbol id="i-vol" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></g></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3l2.8 5.8 6.2.9-4.5 4.4 1 6.3L12 17.5 6.5 20.4l1-6.3L3 9.7l6.2-.9z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></g></symbol>
+  <symbol id="i-tablet" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="3" width="16" height="18" rx="2.5"/><path d="M11 18h2"/></g></symbol>
+  <symbol id="i-desktop" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2.5" y="4" width="19" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></g></symbol>
+  <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.8-.8 1.8-1.7 0-.5-.2-.9-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1 .8-1.7 1.8-1.7H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><g fill="currentColor"><circle cx="7.5" cy="11.5" r="1.3"/><circle cx="10" cy="7.5" r="1.3"/><circle cx="14.5" cy="7.5" r="1.3"/></g></symbol>
+  <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-map" viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></g></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></g></symbol>
+  <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8M4 4v4h4M4 13a8 8 0 0 0 14.3 4.9L20 16M20 20v-4h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></g></symbol>
+  <symbol id="i-ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
+<script src="map-data.js"></script>
+<script src="sounds.js"></script>
+<script src="photos.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "name": "W-Noise — Sounds of the World",
+  "short_name": "W-Noise",
+  "description": "Travel the world by ear: real field recordings from forests, cities, oceans and ice.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#070b14",
+  "theme_color": "#070b14",
+  "categories": ["music", "entertainment", "education"],
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Random trip", "url": "./#random", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Creator & credits", "url": "./#creator", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}
